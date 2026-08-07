@@ -16,6 +16,7 @@ import pygame
 from settings import Settings
 from ship import Ship
 from arsenal import Arsenal
+from alien_fleet import AlienFleet
 
 
 class AlienInvasion:
@@ -46,6 +47,7 @@ class AlienInvasion:
         self.clock = pygame.time.Clock()
 
         self.ship = Ship(self, Arsenal(self))
+        self.alien_fleet = AlienFleet(self)
 
     def run_game(self):
         """Run the main game loop."""
@@ -53,6 +55,8 @@ class AlienInvasion:
             self._check_events()
 
             self.ship.update()
+            self.alien_fleet.update_fleet()
+            self._check_collisions()
 
             self._update_screen()
             self.clock.tick(self.settings.FPS)
@@ -61,8 +65,25 @@ class AlienInvasion:
         """Draw the background, ship, and lasers."""
         self.screen.blit(self.bg, (0, 0))
         self.ship.draw()
+        self.alien_fleet.draw()
 
         pygame.display.flip()
+
+    def _check_collisions(self):
+        """Check collisions between game objects."""
+        self.alien_fleet.check_collisions(
+            self.ship.arsenal.arsenal
+        )
+
+        if self.ship.check_collisions(self.alien_fleet.fleet):
+            self._reset_level()
+
+    def _reset_level(self):
+        """Reset the bullets and alien fleet."""
+        self.ship.arsenal.arsenal.empty()
+        self.alien_fleet.fleet.empty()
+        self.alien_fleet.create_fleet()
+        
 
     def _check_events(self):
         """Respond to keyboard and quit events."""
