@@ -12,6 +12,7 @@ Date: August 7, 2026
 import pygame
 from alien import Alien
 from typing import TYPE_CHECKING
+import math
 
 if TYPE_CHECKING:
     from FrostGalaxy import AlienInvasion
@@ -27,21 +28,76 @@ class AlienFleet:
         self.fleet = pygame.sprite.Group()
         self.fleet_direction = self.settings.fleet_direction
         self.fleet_drop_speed = self.settings.fleet_drop_speed
+        self.formation = 0
 
         self.create_fleet()
 
     def create_fleet(self):
-        """Create the alien fleet."""
+        """Create the next alien fleet formation."""
         alien_w = self.settings.alien_w
         alien_h = self.settings.alien_h
         screen_w = self.settings.screen_w
         screen_h = self.settings.screen_h
 
-        fleet_w, fleet_h = self.calculate_fleet_size(alien_w, screen_w, alien_h, screen_h)
+        if self.formation == 0:
+            self._create_diamond_fleet(alien_w, alien_h, screen_w)
 
-        x_offset, y_offset = self.calculate_offsets(alien_w, alien_h, screen_w, fleet_w, fleet_h)
+        elif self.formation == 1:
+            fleet_w, fleet_h = self.calculate_fleet_size(alien_w, screen_w, alien_h, screen_h)
+            x_offset, y_offset = self.calculate_offsets(alien_w, alien_h, screen_w, fleet_w, fleet_h)
 
-        self._create_rectangle_fleet(alien_w, alien_h, fleet_w, fleet_h, x_offset, y_offset)
+            self._create_rectangle_fleet(alien_w, alien_h, fleet_w, fleet_h, x_offset, y_offset)
+
+        elif self.formation == 2:
+            self._create_circle_fleet(alien_w, alien_h, screen_w)
+
+        self.formation = (self.formation + 1) % 3
+
+    def _create_diamond_fleet(self, alien_w, alien_h, screen_w):
+        """Create aliens in a diamond-shaped formation."""
+        center_x = screen_w // 2
+        start_y = 80
+
+        spacing_x = alien_w * 2
+        spacing_y = alien_h * 2
+
+        rows = [6, 11, 14, 11, 6]
+
+        for row, alien_count in enumerate(rows):
+            current_y = start_y + row * spacing_y
+            row_width = (alien_count - 1) * spacing_x
+            start_x = center_x - row_width // 2
+
+            for col in range(alien_count):
+                current_x = start_x + col * spacing_x
+                self._create_alien(current_x, current_y)
+
+    def _create_circle_fleet(self, alien_w, alien_h, screen_w):
+        """Create aliens in a filled circular formation."""
+        center_x = screen_w // 2
+        center_y = 230
+
+        radius = 270
+        spacing = 60
+
+        current_radius = 0
+
+        while current_radius <= radius:
+            if current_radius == 0:
+                self._create_alien(center_x, center_y)
+            else:
+                circumference = 2 * math.pi * current_radius
+                alien_count = int(circumference // spacing)
+
+                for i in range(alien_count):
+                    angle = 2 * math.pi * i / alien_count
+
+                    current_x = center_x + current_radius * math.cos(angle)
+                    current_y = center_y + current_radius * math.sin(angle)
+
+                    self._create_alien(int(current_x), int(current_y))
+
+            current_radius += spacing
 
     def _create_rectangle_fleet(self, alien_w, alien_h, fleet_w, fleet_h, x_offset, y_offset):
         """Create aliens in a rectangular formation."""

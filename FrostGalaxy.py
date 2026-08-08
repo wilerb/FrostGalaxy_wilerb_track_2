@@ -77,6 +77,8 @@ class AlienInvasion:
 
         if self.ship.check_collisions(self.alien_fleet.fleet):
             self._reset_level()
+        if self.alien_fleet.check_destroyed_status():
+            self._reset_level()
 
     def _reset_level(self):
         """Reset the bullets and alien fleet."""
